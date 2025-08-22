@@ -27,15 +27,19 @@ models:
     staging:
       +materialized: view
       +tags: ["staging"]
+      +schema: watson
     intermediate:
       +materialized: view  
       +tags: ["intermediate"]
+      +schema: watson
     marts:
       +materialized: table
       +tags: ["marts"]
+      +schema: sherlock
       product:
         +materialized: table
         +tags: ["product", "marts"]
+        +schema: sherlock
 
 # Configure seeds
 seeds:

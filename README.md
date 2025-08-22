@@ -37,17 +37,21 @@ aps_dbt_demo/
 ├── packages.yml                 # dbt package dependencies  
 ├── models/
 │   ├── sources.yml             # Source table definitions
-│   ├── staging/                # Data cleaning and basic transforms
+│   ├── staging/                # 📊 watson schema - Data cleaning and basic transforms
 │   │   ├── stg_vendor_job_applications.sql
 │   │   ├── stg_connects_usage.sql
 │   │   └── stg_bid_pricing.sql
-│   ├── intermediate/           # Business logic and enrichment
+│   ├── intermediate/           # 📊 watson schema - Business logic and enrichment
 │   │   └── int_bid_enriched.sql
-│   └── marts/                  # Business-ready models
+│   └── marts/                  # 🎯 sherlock schema - Business-ready models
 │       └── product/
-│           ├── bid_fact.sql    # 🎯 Main fact table
+│           ├── bid_fact.sql    # Main fact table
 │           └── schema.yml      # Tests and documentation
 └── README.md                   # This file
+
+Schema Strategy:
+- staging/ and intermediate/ models → watson schema (data processing)
+- marts/ models → sherlock schema (published analytics tables)
 ```
 
 ## Data Architecture
@@ -59,26 +63,54 @@ aps_dbt_demo/
 - `connects_pricing` - Boosted proposal data
 - Multiple `sherlock` dimensions - Posts, freelancers, clients, etc.
 
+### **Schema Architecture**
+- **`watson` schema** - Staging and intermediate models (data processing layer)
+- **`sherlock` schema** - Published mart models (analytics-ready fact and dimension tables)
+
 ### **Transformation Flow**
 
 ```mermaid
 graph TD
-    A[vendor_job_applications] --> D[stg_vendor_job_applications]
-    B[client_job_applications] --> D
-    C[watson.stg_odeskdb_openings] --> D
+    subgraph "Source Systems"
+        A[vendor_job_applications]
+        B[client_job_applications] 
+        C[watson.stg_odeskdb_openings]
+        F[eo_monetization.connects_*]
+        H[connects_pricing.bid]
+        J[sherlock dimensions]
+    end
     
-    D --> E[stg_connects_usage]
-    F[eo_monetization.connects_*] --> E
+    subgraph "watson schema - Staging & Intermediate"
+        D[stg_vendor_job_applications]
+        E[stg_connects_usage]
+        G[stg_bid_pricing]
+        I[int_bid_enriched]
+    end
     
-    E --> G[stg_bid_pricing] 
-    H[connects_pricing.bid] --> G
+    subgraph "sherlock schema - Published Marts"
+        K[bid_fact]
+    end
     
-    G --> I[int_bid_enriched]
-    J[sherlock dimensions] --> I
+    A --> D
+    B --> D
+    C --> D
     
-    I --> K[bid_fact]
+    D --> E
+    F --> E
+    
+    E --> G
+    H --> G
+    
+    G --> I
+    J --> I
+    
+    I --> K
     
     style K fill:#f9f9f9,stroke:#333,stroke-width:3px
+    style D fill:#e8f4fd,stroke:#0066cc
+    style E fill:#e8f4fd,stroke:#0066cc
+    style G fill:#e8f4fd,stroke:#0066cc
+    style I fill:#e8f4fd,stroke:#0066cc
 ```
 
 ### **Key Business Logic**
@@ -121,7 +153,9 @@ graph TD
 
 2. **Snowflake connection** with access to:
    - Source schemas: `vendor_job_applications`, `client_job_applications`, etc.
-   - Target schema: Your analytics schema for bid_fact output
+   - Target schemas: 
+     - `watson` schema for staging/intermediate models
+     - `sherlock` schema for published mart models
 
 ### Setup Instructions
 
@@ -133,7 +167,7 @@ graph TD
    ```
 
 2. **Configure connection**
-   Copy `profiles.yml.template` to `~/.dbt/profiles.yml` and update with your credentials:
+   Update the `profiles.yml` file with your credentials:
    ```yaml
    aps_dbt_demo:
      target: dev
@@ -145,8 +179,10 @@ graph TD
          password: your_password
          database: SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS
          warehouse: your_warehouse
-         schema: public
+         schema: watson  # Staging models go to watson schema
          role: your_role
+       prod:
+         schema: sherlock  # Mart models go to sherlock schema
    ```
 
 3. **Set environment variables**
