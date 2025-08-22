@@ -39,7 +39,8 @@ venv/
 .env.*.local
 
 # Profiles directory (contains sensitive connection info)
-profiles.yml
+# profiles.yml  # Commented out - we include template with placeholders
+profiles.yml.local
 
 # Database connection files
 *.db

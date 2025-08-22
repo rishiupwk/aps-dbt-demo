@@ -1,0 +1,43 @@
+aps_dbt_demo:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: upwork-prod
+      user: rishisrivastava
+      password: YOUR_PASSWORD_HERE
+      role: user_rishisrivastava_role
+      database: SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS
+      warehouse: YOUR_WAREHOUSE_HERE  # e.g., COMPUTE_WH, SMALL_WH
+      schema: public
+      threads: 4
+      keepalives_idle: 240
+      
+    prod:
+      type: snowflake
+      account: upwork-prod
+      user: rishisrivastava
+      password: YOUR_PASSWORD_HERE
+      role: user_rishisrivastava_role
+      database: SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS
+      warehouse: YOUR_WAREHOUSE_HERE
+      schema: marts
+      threads: 8
+      keepalives_idle: 240
+
+# Instructions:
+# 1. Replace all "YOUR_*_HERE" placeholders with your actual Snowflake credentials
+# 2. Save the file
+# 3. Run "dbt debug --profiles-dir ." to test your connection (the . tells dbt to use profiles.yml from current directory)
+#
+# Example values:
+# account: xy12345.us-east-1  (your Snowflake account identifier)
+# user: john.doe@company.com  (your Snowflake username)
+# password: your_secure_password
+# role: ANALYST  (your Snowflake role)
+# warehouse: COMPUTE_WH  (your Snowflake warehouse)
+#
+# Common Snowflake account formats:
+# - Legacy: xy12345.us-east-1
+# - New format: orgname-accountname
+# - URL format: If you login at https://xy12345.snowflakecomputing.com, your account is "xy12345" 
