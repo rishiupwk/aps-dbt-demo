@@ -1,0 +1,187 @@
+version: 2
+
+sources:
+  - name: vendor_job_applications
+    description: Vendor job applications from freelancers
+    database: "{{ var('plt_database') }}"
+    schema: vendor_job_applications
+    tables:
+      - name: vendor_job_applications
+        description: Freelancer job applications
+        columns:
+          - name: application_uid
+            description: Unique application identifier
+            tests:
+              - unique
+              - not_null
+          - name: opening_uid
+            description: Job opening identifier
+          - name: vendor_uid
+            description: Freelancer person identifier
+          - name: applying_as
+            description: Application type (freelancer/agency)
+          - name: vendor_org_uid
+            description: Agency organization identifier
+          - name: vendor_sub_org_uid
+            description: Agency team identifier
+          - name: status
+            description: Application status
+          - name: created_ts
+            description: Application creation timestamp
+          - name: modified_ts
+            description: Last modification timestamp
+          - name: terms
+            description: Bid amount or hourly rate
+          - name: duration
+            description: Engagement duration
+          - name: legacy_rid
+            description: Legacy bid identifier
+          - name: new_uid
+            description: New version identifier (null for current)
+
+  - name: client_job_applications
+    description: Client-side view of job applications
+    database: "{{ var('plt_database') }}"
+    schema: client_job_applications
+    tables:
+      - name: client_job_applications
+        description: Client view of applications with ATS data
+        columns:
+          - name: application_uid
+            description: Application identifier
+          - name: hidden_by_client
+            description: Whether hidden by client
+          - name: shortlisted
+            description: Whether shortlisted
+          - name: recommended
+            description: Whether recommended by system
+          - name: recommendation_score
+            description: Recommendation score
+
+  - name: eo_monetization
+    description: Enterprise Operations monetization data
+    database: "{{ var('plt_database') }}"
+    schema: eo_monetization
+    tables:
+      - name: connects_transaction_log
+        description: Connects transaction log data
+        columns:
+          - name: id
+            description: Transaction ID
+            tests:
+              - unique
+              - not_null
+          - name: job_application_id
+            description: Job application identifier
+          - name: reason_id
+            description: Transaction reason identifier
+          - name: amount
+            description: Transaction amount
+          - name: timestamp
+            description: Transaction timestamp
+
+      - name: connects_transaction_reason
+        description: Connects transaction reasons
+        columns:
+          - name: id
+            description: Reason ID
+          - name: name
+            description: Reason name
+
+  - name: connects_pricing
+    description: Connects pricing and boosted proposals
+    database: "{{ var('plt_database') }}"
+    schema: connects_pricing
+    tables:
+      - name: bid
+        description: Boosted proposal pricing
+        columns:
+          - name: job_application_uid
+            description: Job application identifier
+          - name: type_id
+            description: Pricing type identifier
+          - name: amount
+            description: Boost amount
+          - name: created_ts
+            description: Creation timestamp
+
+  - name: watson
+    description: Watson schema - consolidated staging data
+    database: "{{ var('tgt_database') }}"
+    schema: watson
+    tables:
+      - name: stg_odeskdb_openings
+        description: Staged job openings from legacy system
+        columns:
+          - name: uid
+            description: Opening unique identifier
+          - name: legacy_rid
+            description: Legacy opening identifier
+          - name: company_uid
+            description: Company identifier
+          - name: organization_uid
+            description: Organization identifier
+          - name: derived_engagement_type
+            description: Engagement type
+          - name: derived_type
+            description: Job type
+
+  - name: sherlock
+    description: Sherlock published dimension tables
+    database: "{{ var('tgt_database') }}"
+    schema: sherlock
+    tables:
+      - name: post_dim
+        description: Job post dimension table
+        columns:
+          - name: post_key
+            description: Surrogate key for post
+            tests:
+              - unique
+              - not_null
+          - name: agora_post_id
+            description: Agora post identifier
+          - name: post_id
+            description: Legacy post identifier
+          - name: platform
+            description: Platform (Upwork/Elance)
+
+      - name: freelancer_dim
+        description: Freelancer dimension table
+        columns:
+          - name: freelancer_key
+            description: Surrogate key for freelancer
+          - name: person_id
+            description: Person identifier
+          - name: freelancer_id
+            description: Freelancer identifier
+
+      - name: client_dim
+        description: Client dimension table
+        columns:
+          - name: client_key
+            description: Surrogate key for client
+          - name: agora_company_id
+            description: Agora company identifier
+          - name: grain_name
+            description: Dimension grain name
+
+      - name: agency_dim
+        description: Agency dimension table
+        columns:
+          - name: agency_key
+            description: Surrogate key for agency
+          - name: agora_team_id
+            description: Agora team identifier
+
+      - name: status_dim
+        description: Status dimension table
+        columns:
+          - name: status_key
+            description: Surrogate key for status
+          - name: status_name
+            description: Status name
+          - name: recipient_table_name
+            description: Target table name
+          - name: recipient_column_name
+            description: Target column name 

@@ -1,0 +1,86 @@
+# dbt-specific ignores
+target/
+dbt_packages/
+dbt_modules/
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.env.local
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Profiles directory (contains sensitive connection info)
+profiles.yml
+
+# Database connection files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Node modules (if using any JS tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# MacOS
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Documentation builds
+docs/_build/
+site/
+
+# Test outputs
+.pytest_cache/
+.coverage
+htmlcov/
+
+# dbt Cloud
+.user.yml 

@@ -1,0 +1,221 @@
+version: 2
+
+models:
+  - name: bid_fact
+    description: >
+      Comprehensive fact table containing all job application bidding data from the Upwork marketplace.
+      This table captures the complete bidding lifecycle including freelancer applications, client responses,
+      ATS workflow, connects usage, boosted proposals, and first response metrics.
+    columns:
+      # Dimension Keys
+      - name: post_key
+        description: Surrogate key for job post dimension
+        tests:
+          - not_null
+          - relationships:
+              to: source('sherlock', 'post_dim')
+              field: post_key
+              
+      - name: client_key
+        description: Surrogate key for client dimension
+        tests:
+          - not_null
+          
+      - name: freelancer_key
+        description: Surrogate key for freelancer dimension
+        tests:
+          - not_null
+          
+      - name: agency_key
+        description: Surrogate key for agency dimension (if agency bid)
+        
+      # Business Identifiers
+      - name: agora_bid_id
+        description: Unique identifier for the bid in Agora system
+        tests:
+          - unique
+          - not_null
+          
+      - name: bid_id
+        description: Legacy bid identifier
+        
+      - name: post_id
+        description: Legacy post identifier
+        tests:
+          - not_null
+          
+      - name: agora_post_id
+        description: Agora post identifier
+        tests:
+          - not_null
+          
+      - name: freelancer_id
+        description: Freelancer identifier
+        tests:
+          - not_null
+          
+      # Bid Details
+      - name: bid_date
+        description: Date when bid was submitted
+        tests:
+          - not_null
+          
+      - name: bid_ts
+        description: Timestamp when bid was submitted
+        tests:
+          - not_null
+          
+      - name: bid_amount
+        description: Bid amount for fixed-price projects
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+              strictly: false
+              
+      - name: hourly_rate
+        description: Hourly rate for hourly projects
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000
+              strictly: false
+              
+      - name: recommend_score
+        description: System recommendation score
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+              strictly: false
+              
+      # Boolean Flags
+      - name: is_recommended
+        description: Whether bid was recommended by system
+        tests:
+          - accepted_values:
+              values: [true, false]
+              
+      - name: is_shortlisted
+        description: Whether bid was shortlisted by client
+        tests:
+          - accepted_values:
+              values: [true, false]
+              
+      - name: is_invited
+        description: Whether freelancer was invited to bid
+        tests:
+          - accepted_values:
+              values: [true, false]
+              
+      - name: is_boosted
+        description: Whether bid was boosted with connects
+        tests:
+          - accepted_values:
+              values: [true, false]
+              
+      - name: is_qualified_bid
+        description: Whether this is a qualified bid for analytics
+        tests:
+          - accepted_values:
+              values: [true, false]
+              
+      # Business Classifications
+      - name: ic_agency_eor
+        description: Classification of bid type (IC/Agency/EOR)
+        tests:
+          - accepted_values:
+              values: ['IC', 'Agency', 'EOR', 'unknown']
+              
+      - name: src_create_type
+        description: How the bid was created (Client invite vs Professional application)
+        tests:
+          - accepted_values:
+              values: ['Client', 'Professional']
+              
+      # Connects and Pricing
+      - name: connects_used
+        description: Number of connects used for this bid
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+              strictly: false
+              
+      - name: boosted_bid_amount
+        description: Amount spent on boosting this proposal
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000
+              strictly: false
+              
+      # Lifecycle Metrics
+      - name: client_first_response_ts
+        description: Timestamp of client's first response to this bid
+        
+      - name: is_first_post_bid
+        description: Whether this is the first bid on the post
+        tests:
+          - accepted_values:
+              values: [true, false]
+              
+      - name: is_first_freelancer_bid
+        description: Whether this is the freelancer's first bid
+        tests:
+          - accepted_values:
+              values: [true, false]
+              
+      # Source Metadata
+      - name: src_create_ts
+        description: When bid was created in source system
+        tests:
+          - not_null
+          
+      - name: src_modified_ts
+        description: When bid was last modified in source system
+        tests:
+          - not_null
+          
+      # Data Warehouse Metadata
+      - name: dw_active_flag
+        description: Whether record is active in data warehouse
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+              
+      - name: dw_create_ts
+        description: When record was created in data warehouse
+        tests:
+          - not_null
+          
+      - name: dw_modified_ts
+        description: When record was last modified in data warehouse
+        tests:
+          - not_null
+          
+      - name: dw_md5_hash
+        description: MD5 hash for change detection
+        tests:
+          - not_null
+
+    tests:
+      # Relationship tests
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1000
+          max_value: 100000000
+          
+      # Data quality tests
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list: ['post_key', 'post_history_key', 'client_key', 'freelancer_key', 'agora_bid_id']
+          
+      # Business logic tests
+      - name: bid_amount_or_hourly_rate_populated
+        description: Either bid_amount or hourly_rate should be populated
+        
+      - name: valid_bid_dates
+        description: Bid dates should be reasonable
+        
+      - name: consistent_boosting_logic
+        description: If is_boosted is true, boosted_bid_amount should be populated 

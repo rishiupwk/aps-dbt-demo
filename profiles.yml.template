@@ -1,0 +1,42 @@
+aps_dbt_demo:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"  # e.g., abc12345.us-east-1
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ANALYST') }}"
+      database: SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      schema: public
+      threads: 4
+      keepalives_idle: 240
+      search_path: "SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.public"
+      
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ANALYST') }}"
+      database: SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      schema: marts
+      threads: 8
+      keepalives_idle: 240
+      search_path: "SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.marts"
+
+# Copy this file to ~/.dbt/profiles.yml and update with your actual credentials
+# 
+# Required environment variables:
+# export SNOWFLAKE_ACCOUNT=your_account_name
+# export SNOWFLAKE_USER=your_username  
+# export SNOWFLAKE_PASSWORD=your_password
+# export SNOWFLAKE_ROLE=your_role
+# export SNOWFLAKE_WAREHOUSE=your_warehouse
+#
+# Optional database overrides:
+# export PLT_DATABASE=SHASTA_SDC_UPWORK
+# export TGT_DATABASE=SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS  
+# export PUB_DATABASE=SHASTA_SDC_PUBLISHED 
