@@ -19,50 +19,26 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
 
 # Configuring models
-# Full documentation: https://docs.getdbt.com/reference/model-configs
 models:
   aps_dbt_demo:
-    # Config indicated by + and applies to all files under models/
     +materialized: table
+    +tags: ["watson_staging"]
     staging:
       +materialized: view
-      +tags: ["staging"]
-      +schema: watson
-    intermediate:
-      +materialized: view  
-      +tags: ["intermediate"]
+      +tags: ["staging", "watson"]
       +schema: watson
     marts:
-      +materialized: table
-      +tags: ["marts"]
-      +schema: sherlock
+      +materialized: table  
+      +tags: ["marts", "watson"]
+      +schema: watson
       product:
         +materialized: table
-        +tags: ["product", "marts"]
-        +schema: sherlock
+        +tags: ["product", "marts", "watson"]
+        +schema: watson
 
-# Configure seeds
-seeds:
-  aps_dbt_demo:
-    +quote_columns: false
-
-# Configure snapshots
-snapshots:
-  aps_dbt_demo:
-    +target_schema: snapshots
-
-# Configure tests
-tests:
-  aps_dbt_demo:
-    +store_failures: true
-
-# Variables for bid_fact POC
+# Project variables  
 vars:
-  # The lookback period for bid processing (days)
-  bid_lookback_days: 180
-  # Timezone for date calculations
   timezone: 'UTC'
-  # Environment-specific database references
   plt_database: "{{ env_var('PLT_DATABASE', 'SHASTA_SDC_UPWORK') }}"
   tgt_database: "{{ env_var('TGT_DATABASE', 'SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS') }}"
   pub_database: "{{ env_var('PUB_DATABASE', 'SHASTA_SDC_PUBLISHED') }}" 

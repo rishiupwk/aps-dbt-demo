@@ -1,187 +1,168 @@
 version: 2
 
 sources:
-  - name: vendor_job_applications
-    description: Vendor job applications from freelancers
+  # Platform database sources
+  - name: contracts
+    description: Contracts and related data
     database: "{{ var('plt_database') }}"
-    schema: vendor_job_applications
+    schema: contracts
     tables:
-      - name: vendor_job_applications
-        description: Freelancer job applications
-        columns:
-          - name: application_uid
-            description: Unique application identifier
-            tests:
-              - unique
-              - not_null
-          - name: opening_uid
-            description: Job opening identifier
-          - name: vendor_uid
-            description: Freelancer person identifier
-          - name: applying_as
-            description: Application type (freelancer/agency)
-          - name: vendor_org_uid
-            description: Agency organization identifier
-          - name: vendor_sub_org_uid
-            description: Agency team identifier
-          - name: status
-            description: Application status
-          - name: created_ts
-            description: Application creation timestamp
-          - name: modified_ts
-            description: Last modification timestamp
-          - name: terms
-            description: Bid amount or hourly rate
-          - name: duration
-            description: Engagement duration
-          - name: legacy_rid
-            description: Legacy bid identifier
-          - name: new_uid
-            description: New version identifier (null for current)
+      - name: hourly_limit_terms
+        description: Hourly contract limit terms
+      - name: contracts
+        description: Contract data with status information
+      - name: terms
+        description: Contract terms data
 
-  - name: client_job_applications
-    description: Client-side view of job applications
+  - name: openings
+    description: Job openings and related data
     database: "{{ var('plt_database') }}"
-    schema: client_job_applications
+    schema: openings
     tables:
-      - name: client_job_applications
-        description: Client view of applications with ATS data
-        columns:
-          - name: application_uid
-            description: Application identifier
-          - name: hidden_by_client
-            description: Whether hidden by client
-          - name: shortlisted
-            description: Whether shortlisted
-          - name: recommended
-            description: Whether recommended by system
-          - name: recommendation_score
-            description: Recommendation score
+      - name: openings
+        description: Main job openings table
+      - name: qualifications
+        description: Job opening qualifications and requirements
+      - name: annotations_custom_fields
+        description: Custom annotations for job posts
 
-  - name: eo_monetization
-    description: Enterprise Operations monetization data
+  - name: openings_extra
+    description: Additional job opening data
     database: "{{ var('plt_database') }}"
-    schema: eo_monetization
+    schema: openings_extra
     tables:
-      - name: connects_transaction_log
-        description: Connects transaction log data
-        columns:
-          - name: id
-            description: Transaction ID
-            tests:
-              - unique
-              - not_null
-          - name: job_application_id
-            description: Job application identifier
-          - name: reason_id
-            description: Transaction reason identifier
-          - name: amount
-            description: Transaction amount
-          - name: timestamp
-            description: Transaction timestamp
+      - name: openings_extra
+        description: Extended job opening attributes
 
-      - name: connects_transaction_reason
-        description: Connects transaction reasons
-        columns:
-          - name: id
-            description: Reason ID
-          - name: name
-            description: Reason name
-
-  - name: connects_pricing
-    description: Connects pricing and boosted proposals
+  - name: odb2_odesk_db
+    description: Legacy ODesk database tables
     database: "{{ var('plt_database') }}"
-    schema: connects_pricing
+    schema: odb2_odesk_db
     tables:
-      - name: bid
-        description: Boosted proposal pricing
-        columns:
-          - name: job_application_uid
-            description: Job application identifier
-          - name: type_id
-            description: Pricing type identifier
-          - name: amount
-            description: Boost amount
-          - name: created_ts
-            description: Creation timestamp
+      - name: companies
+        description: Company information from legacy system
+      - name: agencies
+        description: Agency information from legacy system
+      - name: reasons
+        description: Reason codes and descriptions
 
-  - name: watson
-    description: Watson schema - consolidated staging data
-    database: "{{ var('tgt_database') }}"
-    schema: watson
+  - name: catalogdb
+    description: Catalog database with project information
+    database: "{{ var('plt_database') }}"
+    schema: catalogdb
     tables:
-      - name: stg_odeskdb_openings
-        description: Staged job openings from legacy system
-        columns:
-          - name: uid
-            description: Opening unique identifier
-          - name: legacy_rid
-            description: Legacy opening identifier
-          - name: company_uid
-            description: Company identifier
-          - name: organization_uid
-            description: Organization identifier
-          - name: derived_engagement_type
-            description: Engagement type
-          - name: derived_type
-            description: Job type
+      - name: project
+        description: Project dimension data
 
+  - name: scheduled_rate_increases
+    description: Scheduled Rate Increases (SRI) data
+    database: "{{ var('plt_database') }}"
+    schema: scheduled_rate_increases
+    tables:
+      - name: planned_rate_increases
+        description: Planned rate increases for contracts
+
+  - name: bring_your_own
+    description: Bring Your Own (BYO) relationship data
+    database: "{{ var('plt_database') }}"
+    schema: bring_your_own
+    tables:
+      - name: registration_invitations
+        description: BYO registration invitations
+
+  - name: directory
+    description: Directory and organization data
+    database: "{{ var('plt_database') }}"
+    schema: directory
+    tables:
+      - name: organizations
+        description: Organization directory
+
+  - name: wms_offers
+    description: Workforce Management System offers
+    database: "{{ var('plt_database') }}"
+    schema: wms_offers
+    tables:
+      - name: offers
+        description: Job offers data
+      - name: events
+        description: Offer events and state changes
+
+  - name: client_ads
+    description: Client advertisements and pricing
+    database: "{{ var('plt_database') }}"
+    schema: client_ads
+    tables:
+      - name: ad_price_calculation
+        description: Featured job pricing calculations
+      - name: ad_status_history
+        description: Ad status change history
+      - name: ad
+        description: Advertisement data
+
+  - name: geods
+    description: Geographic and location data
+    database: "{{ var('plt_database') }}"
+    schema: geods
+    tables:
+      - name: postal_code
+        description: Postal code location data
+      - name: area
+        description: Geographic area data
+      - name: city
+        description: City location data
+
+  - name: odesk_bpa_odesk_bp
+    description: ODesk business process data
+    database: "{{ var('plt_database') }}"
+    schema: odesk_bpa_odesk_bp
+    tables:
+      - name: aes
+        description: Account Executive data
+
+  - name: finance_apps
+    description: Finance applications data
+    database: "{{ var('plt_database') }}"
+    schema: finance_apps
+    tables:
+      - name: xxeo_pf_lkp_internal_ae_v
+        description: Internal Account Executive lookup
+
+  - name: cltvv2
+    description: Customer Lifetime Value v2 data
+    database: "{{ var('plt_database') }}"
+    schema: cltvv2
+    tables:
+      - name: openings
+        description: CLTV openings analysis
+
+  - name: tns_datamart_tns_device_mgmt
+    description: TNS device management data
+    database: "{{ var('plt_database') }}"
+    schema: tns_datamart_tns_device_mgmt
+    tables:
+      - name: device_ids
+        description: Device ID tracking data
+
+  # Target database sources (published dimensions)
   - name: sherlock
     description: Sherlock published dimension tables
     database: "{{ var('tgt_database') }}"
     schema: sherlock
     tables:
+      - name: match_fjp_ltv
+        description: Match FJP lifetime value data
       - name: post_dim
         description: Job post dimension table
-        columns:
-          - name: post_key
-            description: Surrogate key for post
-            tests:
-              - unique
-              - not_null
-          - name: agora_post_id
-            description: Agora post identifier
-          - name: post_id
-            description: Legacy post identifier
-          - name: platform
-            description: Platform (Upwork/Elance)
-
-      - name: freelancer_dim
-        description: Freelancer dimension table
-        columns:
-          - name: freelancer_key
-            description: Surrogate key for freelancer
-          - name: person_id
-            description: Person identifier
-          - name: freelancer_id
-            description: Freelancer identifier
-
       - name: client_dim
         description: Client dimension table
-        columns:
-          - name: client_key
-            description: Surrogate key for client
-          - name: agora_company_id
-            description: Agora company identifier
-          - name: grain_name
-            description: Dimension grain name
+      - name: quality_segment_dim
+        description: Quality segment dimension table
 
-      - name: agency_dim
-        description: Agency dimension table
-        columns:
-          - name: agency_key
-            description: Surrogate key for agency
-          - name: agora_team_id
-            description: Agora team identifier
-
-      - name: status_dim
-        description: Status dimension table
-        columns:
-          - name: status_key
-            description: Surrogate key for status
-          - name: status_name
-            description: Status name
-          - name: recipient_table_name
-            description: Target table name
-          - name: recipient_column_name
-            description: Target column name 
+  - name: watson
+    description: Watson staging schema (for incremental operations)
+    database: "{{ var('tgt_database') }}"
+    schema: watson
+    tables:
+      - name: stg_tns_device_mgmt_device_ids
+        description: Staged TNS device management data (for incremental loads) 
