@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 -- Bring Your Own (BYO) and Manage & Pay relationship staging model
 -- Target table: watson.stg_byo_dbt
 
@@ -11,8 +9,8 @@ select
     max(byo.relationship_type ilike 'legacy_byo') as is_byo,
     max(byo.relationship_type ilike 'manage_and_pay') as is_manage_and_pay,    
     min(iff(byo.relationship_type ilike 'legacy_byo', to_timestamp(offer_created_on_ts/1000), null)) as byo_ts
-from {{ source('bring_your_own', 'registration_invitations') }} byo
-join {{ source('directory', 'organizations') }} o 
+from SHASTA_SDC_UPWORK.bring_your_own.registration_invitations byo
+join SHASTA_SDC_UPWORK.directory.organizations o 
     on byo.sender_company_recno::bigint = o.legacy_ref::bigint
 where coalesce(byo.uid, byo.agency_uid) is not null
 group by all

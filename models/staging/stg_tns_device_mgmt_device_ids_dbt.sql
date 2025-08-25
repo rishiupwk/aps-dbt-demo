@@ -1,10 +1,4 @@
-{{ config(
-    materialized='incremental',
-    unique_key='id',
-    on_schema_change='fail'
-) }}
-
--- Incremental model for TNS device management device IDs
+-- TNS device management device IDs (simplified without incremental logic)
 -- Target table: watson.stg_tns_device_mgmt_device_ids_dbt
 
 select
@@ -21,13 +15,5 @@ select
     s.event_id,
     current_timestamp as dw_create_ts,
     0 as dw_create_user_id
-from {{ source('tns_datamart_tns_device_mgmt', 'device_ids') }} s
-{% if is_incremental() %}
-    left join {{ this }} t 
-        on s.id = t.id 
-        and t.event_id = 2
-{% endif %}
+from SHASTA_SDC_UPWORK.tns_datamart_tns_device_mgmt.device_ids s
 where s.event_id = 2 
-{% if is_incremental() %}
-    and t.id is null
-{% endif %} 

@@ -8,7 +8,7 @@ with offer_events_data as (
         offer_instance_id as offer_id,
         max(case when state in ('ACCEPTED','DECLINED','WITHDRAWN','EXPIRED','CANCELED','CHANGED') then timestamp end) as offer_response_ts,
         max(case when state = 'ACTIVE' then true else false end) as is_visible_offer
-    from {{ source('wms_offers', 'events') }}
+    from SHASTA_SDC_UPWORK.wms_offers.events
     -- these are events that are being considered a "response"
     where state in ('ACCEPTED','DECLINED','WITHDRAWN','EXPIRED','CANCELED','CHANGED','ACTIVE')
     group by all
@@ -65,16 +65,16 @@ select
     o.delivery_model,
     o.source_type,
     ct.id as contract_terms_id
-from {{ source('wms_offers', 'offers') }} o
-left join {{ source('contracts', 'terms') }} ct on ct.id=o.contract_id
-left join {{ source('odb2_odesk_db', 'reasons') }} r on o.termination_reason_id = r."Record_ID#"
+from SHASTA_SDC_UPWORK.wms_offers.offers o
+left join SHASTA_SDC_UPWORK.contracts.terms ct on ct.id=o.contract_id
+left join SHASTA_SDC_UPWORK.odb2_odesk_db.reasons r on o.termination_reason_id = r."Record_ID#"
 left join offer_events_data oed on o.instance_id = oed.offer_id
-left join {{ ref('stg_byo_dbt') }} byo 
+left join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.watson.stg_byo_dbt byo 
     on o.client_org_id = byo.client_agora_company_id 
     and o.vendor_person_id = byo.freelancer_person_id 
     and byo.invitee_type ilike 'freelancer'
-left join {{ ref('tmp_sri_entities_dbt') }} e 
+left join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.watson.tmp_sri_entities_dbt e 
     on o.instance_id = e.domain_id 
     and e.domain ilike 'offer'
-left join {{ source('openings', 'openings') }} oo on o.job_posting_uid = oo.uid
-left join {{ source('openings_extra', 'openings_extra') }} oe on o.job_posting_uid = oe.uid 
+left join SHASTA_SDC_UPWORK.openings.openings oo on o.job_posting_uid = oo.uid
+left join SHASTA_SDC_UPWORK.openings_extra.openings_extra oe on o.job_posting_uid = oe.uid 

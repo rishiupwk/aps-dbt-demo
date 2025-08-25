@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 -- Client quality stage model combining FJP LTV and CLTVv2 data
 -- Target table: watson.client_quality_stage_dbt
 
@@ -22,13 +20,13 @@ from (
         p.post_date as post_date,
         p.is_fjp as is_fjp,
         'match.fjp_ltv' as src_table_name
-    from {{ source('sherlock', 'match_fjp_ltv') }} m
-    inner join {{ source('sherlock', 'post_dim') }} p 
+    from SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.sherlock.match_fjp_ltv m
+    inner join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.sherlock.post_dim p 
         on m.opening::bigint = p.post_id::bigint
-    inner join {{ source('sherlock', 'client_dim') }} c 
+    inner join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.sherlock.client_dim c 
         on m.employer::bigint = c.client_id::bigint 
         and c.grain_name = 'client'
-    inner join {{ source('sherlock', 'quality_segment_dim') }} qs 
+    inner join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.sherlock.quality_segment_dim qs 
         on m.pred_label = qs.quality_value 
         and qs.recipient_table_name = 'client_dim' 
         and qs.recipient_column_name = 'projected_client_quality_segment'
@@ -47,13 +45,13 @@ from (
         p.post_date as post_date,
         p.is_fjp as is_fjp,
         'cltvv2.openings' as src_table_name
-    from {{ source('cltvv2', 'openings') }} m
-    inner join {{ source('sherlock', 'post_dim') }} p 
+    from SHASTA_SDC_UPWORK.cltvv2.openings m
+    inner join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.sherlock.post_dim p 
         on m.opening::bigint = p.post_id::bigint
-    inner join {{ source('sherlock', 'client_dim') }} c 
+    inner join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.sherlock.client_dim c 
         on p.agora_company_id::bigint = c.agora_company_id::bigint 
         and c.grain_name = 'client'
-    inner join {{ source('sherlock', 'quality_segment_dim') }} qs 
+    inner join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.sherlock.quality_segment_dim qs 
         on m.dollar_amount between qs.min_value and qs.max_value  
         and qs.recipient_table_name = 'client_dim' 
         and qs.recipient_column_name = 'projected_client_quality_segment'

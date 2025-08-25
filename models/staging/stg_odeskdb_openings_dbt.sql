@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 -- Complex staging model for job openings with qualifications, featured job data, and location enrichment
 -- Target table: watson.stg_odeskdb_openings_dbt
 
@@ -9,13 +7,13 @@ with qualifications as (
         parse_json(qual.locations)[0][0] as area_type,
         parse_json(qual.locations)[0][1] as area_id,
         parse_json(qual.locations)[0][2] as area_name
-    from {{ source('openings', 'qualifications') }} qual
+    from SHASTA_SDC_UPWORK.openings.qualifications qual
 ),
 
 jpgv2_posts as (
     select
         opening_uid
-    from {{ source('openings', 'annotations_custom_fields') }}
+    from SHASTA_SDC_UPWORK.openings.annotations_custom_fields
     where name ilike 'optInDescriptionAIv2'
         and value ilike 'yes'
     group by 1
@@ -25,7 +23,7 @@ ad_price as (
     select 
         job_post_uid, 
         price::number(34,8) featured_job_price
-    from {{ source('client_ads', 'ad_price_calculation') }}
+    from SHASTA_SDC_UPWORK.client_ads.ad_price_calculation
     qualify row_number() over(partition by job_post_uid order by calculation_ts desc nulls last) = 1
 ),
 
@@ -33,8 +31,8 @@ featured_jobs as (
     select 
         a.job_post_uid,
         min(ash.created_ts)::timestamp_ntz(9) as job_featured_ts
-    from {{ source('client_ads', 'ad_status_history') }} ash
-    inner join {{ source('client_ads', 'ad') }} a
+    from SHASTA_SDC_UPWORK.client_ads.ad_status_history ash
+    inner join SHASTA_SDC_UPWORK.client_ads.ad a
         on ash.ad_id = a.id
     where ash.status = 'ACTIVE'
     group by a.job_post_uid
@@ -76,31 +74,31 @@ select distinct
     apc.featured_job_price,
     fj.job_featured_ts,
     coalesce(oe.direct_hire, false) as is_direct_hire
-from {{ source('openings', 'openings') }} o
+from SHASTA_SDC_UPWORK.openings.openings o
 left join qualifications q on o.uid::bigint = q.opening_uid::bigint
 left join jpgv2_posts jai on o.uid::bigint = jai.opening_uid::bigint
-left join {{ source('openings_extra', 'openings_extra') }} oe on o.uid = oe.uid
+left join SHASTA_SDC_UPWORK.openings_extra.openings_extra oe on o.uid = oe.uid
 left join (
     select 
         opening_uid, 
         max(status) as assignment_status
-    from {{ source('contracts', 'contracts') }} 
+    from SHASTA_SDC_UPWORK.contracts.contracts 
     where coalesce(delivery_model,'N/A') <> 'MICRO_PAYMENTS'
     group by 1
 ) astatus on astatus.opening_uid::bigint = o.uid::bigint
-left join {{ source('geods', 'postal_code') }} pc 
+left join SHASTA_SDC_UPWORK.geods.postal_code pc 
     on q.area_id::bigint = pc.id::bigint 
     and q.area_type = 'POSTAL_CODE' 
     and nullif(q.locations,'[]') is not null
-left join {{ source('geods', 'area') }} a 
+left join SHASTA_SDC_UPWORK.geods.area a 
     on q.area_id::bigint = a.id::bigint 
     and q.area_type = 'AREA' 
     and nullif(q.locations,'[]') is not null
-left join {{ source('geods', 'city') }} c 
+left join SHASTA_SDC_UPWORK.geods.city c 
     on q.area_id::bigint = c.id::bigint 
     and q.area_type = 'CITY' 
     and nullif(q.locations,'[]') is not null
-left join {{ source('geods', 'city') }} cm 
+left join SHASTA_SDC_UPWORK.geods.city cm 
     on pc.city_id::bigint = cm.id::bigint 
     and q.area_type = 'POSTAL_CODE' 
     and nullif(q.locations,'[]') is not null
