@@ -26,15 +26,9 @@ models:
     staging:
       +materialized: view
       +tags: ["staging", "watson"]
-      +schema: watson
     marts:
       +materialized: table  
       +tags: ["marts", "watson"]
-      +schema: watson
-      product:
-        +materialized: table
-        +tags: ["product", "marts", "watson"]
-        +schema: watson
 
 # Project variables  
 vars:

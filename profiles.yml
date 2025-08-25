@@ -9,7 +9,7 @@ aps_dbt_demo:
       role: user_rishisrivastava_role
       database: SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS
       warehouse: SNOW_APS_WH
-      schema: sherlock  # Development also uses sherlock schema
+      schema: watson  # Base schema for watson staging models
       threads: 4
       keepalives_idle: 240
       
@@ -21,7 +21,7 @@ aps_dbt_demo:
       role: user_rishisrivastava_role
       database: SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS
       warehouse: SNOW_APS_WH
-      schema: sherlock  # Production uses sherlock schema for published marts
+      schema: watson  # Production uses watson schema for staging models
       threads: 8
       keepalives_idle: 240
 
