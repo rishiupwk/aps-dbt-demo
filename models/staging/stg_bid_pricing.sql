@@ -1,92 +1,101 @@
 {{ config(materialized='view') }}
 
-with bid_pricing as (
+with vendor_applications as (
     select
-        job_application_uid,
-        type_id,
-        amount as boosted_bid_amount,
-        created_ts
-    from {{ source('connects_pricing', 'bid') }} bid
-    qualify row_number() over(
-        partition by job_application_uid, type_id 
-        order by created_ts desc
-    ) = 1
+        application_uid as agora_bid_id,
+        opening_uid as agora_post_id,
+        vendor_uid as freelancer_id,
+        applying_as,
+        vendor_org_uid as agora_company_id,
+        vendor_sub_org_uid as agora_team_id,
+        status as modernized_status,
+        legacy_rid as bid_id,
+        terms as amount,
+        duration,
+        created_ts as src_create_ts,
+        modified_ts as src_modified_ts,
+        'vendor_job_applications' as src_table_name,
+        'Professional' as src_create_type,
+        date(created_ts) as bid_date,
+        created_ts as bid_ts
+    from {{ source('vendor_job_applications', 'vendor_job_applications') }}
+    where new_uid is null  -- Get current version only
 ),
 
-clearing_charges as (
+client_applications as (
+    select
+        application_uid,
+        hidden_by_client,
+        shortlisted as is_shortlisted,
+        recommended as is_recommended,
+        recommendation_score as recommend_score
+    from {{ source('client_job_applications', 'client_job_applications') }}
+),
+
+connects_usage as (
     select 
         ctl.job_application_id,
-        ctl.amount as clearing_charge,
-        ctle.paid_amount as paid_clearing_charge
+        sum(ctl.amount) as connects_used,
+        sum(ctl.amount) as connects_amount
     from {{ source('eo_monetization', 'connects_transaction_log') }} ctl
     join {{ source('eo_monetization', 'connects_transaction_reason') }} ctr
         on ctl.reason_id = ctr.id
-    left join {{ source('eo_monetization', 'connects_transaction_log_ext') }} ctle
-        on ctl.id = ctle.transaction_id
-    where ctr.name = 'SPONSORED_PROPOSAL_AUCTION_CLEARING_CHARGE'
-    qualify row_number() over(
-        partition by job_application_id 
-        order by ctl.timestamp desc
-    ) = 1
+    where ctr.name in ('PROPOSAL_SUBMISSION', 'PROPOSAL_APPLICATION')
+    group by ctl.job_application_id
+),
+
+boosted_bids as (
+    select
+        job_application_uid,
+        sum(case when type_id = 1 then amount else 0 end) as boosted_amount
+    from {{ source('connects_pricing', 'bid') }}
+    group by job_application_uid
 )
 
 select
-    agora_bid_id,
-    post_id,
-    agora_post_id,
-    agora_company_id,
-    agora_team_id,
-    applying_as,
-    agora_agency_id,
-    agora_agency_team_id,
-    freelancer_person_id,
-    engagement_type_id,
-    engagement_duration,
-    engagement_duration_uid,
-    job_type,
-    modernized_status,
-    reason_id,
-    ats_status,
-    hide_status_name,
-    hidden_by_client_reason_rid,
-    bid_id,
-    bid_date,
-    bid_ts,
-    recommend_score,
-    is_recommended,
-    is_shortlisted,
-    is_ts_recruiter_services_from_shortlist,
-    amount,
-    hourly_rate,
-    is_invited,
-    invitation_uid,
-    dashroom_uid,
-    is_on_hold,
-    is_uma_proposal,
-    src_table_name,
-    src_create_type,
-    src_create_person_id,
-    src_modified_person_id,
-    invite_src_create_person_id,
-    hiring_manager_person_id,
-    src_create_ts,
-    src_modified_ts,
-    _loaded_at,
-    connects_used,
+    va.agora_bid_id,
+    va.agora_post_id,
+    va.agora_post_id::string as post_id,  -- Legacy compatibility
+    va.freelancer_id,
+    va.applying_as,
+    va.agora_company_id,
+    va.agora_team_id,
+    va.modernized_status,
+    va.bid_id,
+    va.bid_date,
+    va.bid_ts,
+    va.amount,
+    null::decimal(10,2) as hourly_rate,  -- Simplified for POC
+    va.duration,
     
-    -- Add boosted bid information
-    case when bcps1.job_application_uid is not null then true else false end as is_boosted,
-    bcps1.boosted_bid_amount,
-    case when bcps3.job_application_uid is not null then true else false end as is_boosted_cleared,
-    cc.clearing_charge,
-    cc.paid_clearing_charge
+    -- Client-side data
+    coalesce(ca.is_recommended, false) as is_recommended,
+    coalesce(ca.is_shortlisted, false) as is_shortlisted,
+    coalesce(ca.recommend_score, 0) as recommend_score,
+    coalesce(ca.hidden_by_client, false) as hidden_by_client,
     
-from {{ ref('stg_connects_usage') }} vja 
-left join bid_pricing bcps1 
-    on vja.agora_bid_id = bcps1.job_application_uid 
-    and bcps1.type_id = 1
-left join bid_pricing bcps3 
-    on vja.agora_bid_id = bcps3.job_application_uid 
-    and bcps3.type_id = 3
-left join clearing_charges cc 
-    on vja.agora_bid_id = cc.job_application_id 
+    -- Connects and boosting
+    coalesce(cu.connects_used, 0) as connects_used,
+    coalesce(cu.connects_amount, 0) as connects_amount,
+    coalesce(bb.boosted_amount, 0) as boosted_amount,
+    case when bb.boosted_amount > 0 then true else false end as is_boosted,
+    
+    -- Additional flags
+    false as is_invited,  -- Simplified for POC
+    false as is_on_hold,  -- Simplified for POC
+    false as is_uma_proposal,  -- Simplified for POC
+    null as invitation_uid,  -- Simplified for POC
+    
+    -- Source metadata
+    va.src_table_name,
+    va.src_create_type,
+    va.src_create_ts,
+    va.src_modified_ts
+    
+from vendor_applications va
+left join client_applications ca
+    on va.agora_bid_id = ca.application_uid
+left join connects_usage cu
+    on va.agora_bid_id = cu.job_application_id
+left join boosted_bids bb
+    on va.agora_bid_id = bb.job_application_uid 
