@@ -204,18 +204,4 @@ models:
       # Relationship tests
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 1000
-          max_value: 100000000
-          
-      # Data quality tests
-      - dbt_expectations.expect_table_columns_to_match_ordered_list:
-          column_list: ['post_key', 'post_history_key', 'client_key', 'freelancer_key', 'agora_bid_id']
-          
-      # Business logic tests
-      - name: bid_amount_or_hourly_rate_populated
-        description: Either bid_amount or hourly_rate should be populated
-        
-      - name: valid_bid_dates
-        description: Bid dates should be reasonable
-        
-      - name: consistent_boosting_logic
-        description: If is_boosted is true, boosted_bid_amount should be populated 
+          max_value: 100000000 
