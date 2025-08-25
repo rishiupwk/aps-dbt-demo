@@ -51,11 +51,11 @@ select
          else 'N/A'
     end as offer_job_subtype,
     case when o.source_type = 'CONTRACT_PROPOSAL' then o.source_id end as contract_proposal_uid,
-    coalesce(byo.is_byo and o.delivery_model not ilike 'manage_and_pay', false) as is_byo,
-    coalesce(byo.is_manage_and_pay or o.delivery_model ilike 'manage_and_pay', false) as is_manage_and_pay,
-    e.domain_id is not null as is_sri_enabled,
-    e.rate as sri_rate_increase_percent,
-    coalesce(e.cadence_months,0) as sri_cadence_months,
+    false as is_byo,  -- Simplified for POC  
+    o.delivery_model ilike 'manage_and_pay' as is_manage_and_pay,
+    false as is_sri_enabled,  -- Simplified for POC
+    0 as sri_rate_increase_percent,  -- Simplified for POC
+    0 as sri_cadence_months,  -- Simplified for POC
     coalesce(oed.is_visible_offer,false) as is_visible_offer,
     -- duplicating data from platform, cause stg is filtered for ghost posts
     oo.created_by_uid as src_post_created_person_id,
@@ -69,12 +69,5 @@ from SHASTA_SDC_UPWORK.wms_offers.offers o
 left join SHASTA_SDC_UPWORK.contracts.terms ct on ct.id=o.contract_id
 left join SHASTA_SDC_UPWORK.odb2_odesk_db.reasons r on o.termination_reason_id = r."Record_ID#"
 left join offer_events_data oed on o.instance_id = oed.offer_id
-left join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.watson.stg_byo_dbt byo 
-    on o.client_org_id = byo.client_agora_company_id 
-    and o.vendor_person_id = byo.freelancer_person_id 
-    and byo.invitee_type ilike 'freelancer'
-left join SBX_RISHISRIVASTAVA_DM13471_SHASTA_SDC_DPS.watson.tmp_sri_entities_dbt e 
-    on o.instance_id = e.domain_id 
-    and e.domain ilike 'offer'
 left join SHASTA_SDC_UPWORK.openings.openings oo on o.job_posting_uid = oo.uid
 left join SHASTA_SDC_UPWORK.openings_extra.openings_extra oe on o.job_posting_uid = oe.uid 
